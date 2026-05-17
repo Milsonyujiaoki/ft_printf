@@ -4,27 +4,6 @@
 NAME := libftprintf
 
 
-# =========================================================
-# Compiler / Archiver
-# =========================================================
-CC := cc
-AR := ar
-ARFLAGS  = rcs
-
-CFLAGS := -Wall -Wextra -Werror 
-CFLAGS      += -Wpedantic -std=c11 # Enforce C11 standard and pedantic warnings
-CFLAGS      += -O2 # Optimize for speed (can be adjusted for debugging)
-CFLAGS      += -I$(INC_DIR)
-CFLAGS      += -MMD -MP # Dependency Generation
-
-CFLAGS += -I$(LIBFT_DIR)/include # Include libft headers for tests
-
-TEST_INC     = -I$(INC_DIR)/core
-
-PIC_FLAGS    = -fPIC # Position Independent Code for shared library
-
-LDFLAGS      = -L$(STATIC_DIR) -lftprintf # Link against static library for tests
-SHARED_LDFLAGS = -shared -Wl,-soname,$(SHARED_SONAME) -Wl,--version-script=$(abspath $(SHARED_MAP))
 
 # =========================================================
 # Directories
@@ -87,10 +66,34 @@ TESTS        = $(wildcard $(TEST_SRC_DIR)/*/*.c)
 
 TEST_BINS    = $(patsubst $(TEST_SRC_DIR)/%.c,$(TEST_DIR)/%,$(TESTS))
 
+# =========================================================
+# Compiler / Archiver
+# =========================================================
+CC := cc
+AR := ar
+ARFLAGS  = rcs
+
+CFLAGS := -Wall -Wextra -Werror 
+CFLAGS      += -Wpedantic -std=c11 # Enforce C11 standard and pedantic warnings
+CFLAGS      += -O2 # Optimize for speed (can be adjusted for debugging)
+CFLAGS      += -I$(INC_DIR)
+CFLAGS      += -MMD -MP # Dependency Generation
+
+CFLAGS += -I$(LIBFT_DIR)/include # Include libft headers for tests
+
+TEST_INC     = -I$(INC_DIR)/core
+
+PIC_FLAGS    = -fPIC # Position Independent Code for shared library
+
+LDFLAGS      = -L$(STATIC_DIR) -lftprintf # Link against static library for tests
+SHARED_LDFLAGS = -shared -Wl,-soname,$(SHARED_SONAME) -Wl,--version-script=$(abspath $(SHARED_MAP))
+
 
 # =========================================================
 # Main targets
 # =========================================================
+
+
 
 all: static 
 
