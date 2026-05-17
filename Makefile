@@ -8,7 +8,8 @@ NAME := libftprintf
 # Compiler / Archiver
 # =========================================================
 CC := cc
-AR := ar 
+AR := ar
+ARFLAGS  = rcs
 
 CFLAGS := -Wall -Wextra -Werror 
 CFLAGS      += -Wpedantic -std=c11 # Enforce C11 standard and pedantic warnings
@@ -18,10 +19,11 @@ CFLAGS      += -MMD -MP # Dependency Generation
 
 CFLAGS += -I$(LIBFT_DIR)/include # Include libft headers for tests
 
+TEST_INC     = -I$(INC_DIR)/core
 
 PIC_FLAGS    = -fPIC # Position Independent Code for shared library
 
-LDFLAGS      = -L$(STATIC_DIR) -lft # Link against static library for tests
+LDFLAGS      = -L$(STATIC_DIR) -lftprintf # Link against static library for tests
 SHARED_LDFLAGS = -shared -Wl,-soname,$(SHARED_SONAME) -Wl,--version-script=$(abspath $(SHARED_MAP))
 
 # =========================================================
@@ -45,8 +47,10 @@ OBJ_SHARED   = $(OBJ_DIR)/shared
 TEST_DIR     = $(BUILD_DIR)/tests
 BINS_DIR  = $(BUILD_DIR)/bins
 
-LIBFT_DIR = ./libft
-LIBFT = $(LIBFT_DIR)/build/static/libft.a
+LIBFT_DIR        = ./libft
+LIBFT_STATIC     = $(LIBFT_DIR)/build/static/libft.a
+LIBFT_SHARED_DIR = $(LIBFT_DIR)/build/shared
+LIBFT_SHARED     = $(LIBFT_SHARED_DIR)/libft.so.$(SHARED_MAJOR)
 
 # =========================================================
 # Library output
@@ -88,7 +92,7 @@ TEST_BINS    = $(patsubst $(TEST_SRC_DIR)/%.c,$(TEST_DIR)/%,$(TESTS))
 # Main targets
 # =========================================================
 
-all: static tests
+all: static 
 
 static: $(STATIC_LIB)
 
@@ -113,21 +117,32 @@ $(OBJ_SHARED)/%.o: $(SRC_DIR)/%.c
 	$(CC) $(CFLAGS) $(PIC_FLAGS) -c $< -o $@
 
 # =========================================================
+# Auto-build libft
+# =========================================================
+
+$(LIBFT_STATIC):
+	$(MAKE) -C $(LIBFT_DIR) static
+
+$(LIBFT_SHARED):
+	$(MAKE) -C $(LIBFT_DIR) shared
+
+# =========================================================
 # Static library
 # =========================================================
 
-$(STATIC_LIB): $(OBJ_STATICS)
+$(STATIC_LIB): $(OBJ_STATICS) $(LIBFT_STATIC)
 	@mkdir -p $(STATIC_DIR)
-	$(AR) $(ARFLAGS) $@ $^
+	cp $(LIBFT_STATIC) $@
+	$(AR) $(ARFLAGS) $@ $(OBJ_STATICS)
 	@echo "Built static library: $@"
 
 # =========================================================
 # Shared library
 # =========================================================
 
-$(SHARED_LIB): $(OBJ_SHAREDS)
+$(SHARED_LIB): $(OBJ_SHAREDS) $(LIBFT_SHARED)
 	@mkdir -p $(SHARED_DIR)
-	$(CC) $(SHARED_LDFLAGS) -o $@ $^
+	$(CC) $(SHARED_LDFLAGS) -o $@ $(OBJ_SHAREDS) -L$(LIBFT_SHARED_DIR) -lft
 	ln -sfn $(notdir $@) $(SHARED_LIB_MAJOR)
 	ln -sfn $(notdir $(SHARED_LIB_MAJOR)) $(SHARED_LINK)
 	@echo "Built shared library: $@"
@@ -139,7 +154,7 @@ $(SHARED_LIB): $(OBJ_SHAREDS)
 $(TEST_DIR)/%: $(TEST_SRC_DIR)/%.c $(STATIC_LIB)
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(TEST_INC) \
-		-include libftprintf.h \
+		-include ft_printf.h \
 		$< $(LDFLAGS) -o $@
 
 # =========================================================
@@ -205,6 +220,10 @@ clean:
 	rm -rf $(BUILD_DIR)
 
 fclean: clean
+	$(MAKE) -C $(LIBFT_DIR) fclean
+
+libft_clean:
+	$(MAKE) -C $(LIBFT_DIR) fclean
 
 re: fclean all
 
@@ -225,4 +244,5 @@ re: fclean all
 	uninstall \
 	clean \
 	fclean \
+	libft_clean \
 	re

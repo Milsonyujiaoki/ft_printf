@@ -1,7 +1,7 @@
 #ifndef FT_PRINTF_H
 # define FT_PRINTF_H
 
-# include <libft.h>
+# include "libft/build/static/libft.a"
 # include <stdarg.h>
 # include <unistd.h>
 
