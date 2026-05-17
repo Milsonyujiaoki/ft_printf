@@ -59,6 +59,23 @@ O loop percorre a string de formato caractere a caractere:
 `dispatch` é uma cadeia de `if/return` que mapeia o especificador para a
 função de conversão correta. Não há tabela de ponteiros nem `switch` —
 a simplicidade é intencional para facilitar a leitura e a manutenção.
+```
+ft_printf
+   │
+   ├── loop format string
+   │
+   ├── char normal ──> write
+   │
+   └── '%' encontrado
+            │
+            └── dispatch(specifier)
+                     │
+                     ├── %c -> print_char
+                     ├── %s -> print_str
+                     ├── %d -> print_int
+                     ├── %x -> print_hex
+                     └── ...
+```
 
 ### Funções de conversão
 
@@ -69,7 +86,7 @@ recebem `va_list args` e retornam o número de caracteres escritos.
 |---------------|--------------------|---------------------------------------------------------|
 | `%c`          | `print_char.c`     | `va_arg` → `ft_putchar_fd`                              |
 | `%s`          | `print_str.c`      | `va_arg` → guarda `"(null)"` se NULL → `ft_putstr_fd`  |
-| `%d` / `%i`   | `print_int.c`      | `ft_itoa` → `ft_putstr_fd` → `ft_free`                 |
+| `%d` / `%i`   | `print_int.c`      | `ft_itoa` → `ft_putstr_fd` → `ft_free` ft_itoa aloca uma string temporária que é liberada imediatamente após a escrita.                |
 | `%u`          | `print_uint.c`     | recursão simples, dígito a dígito                       |
 | `%x` / `%X`   | `print_hex.c`      | recursão com base `"0123456789abcdef"` ou `"ABCDEF"`    |
 | `%p`          | `print_ptr.c`      | prefixo `"0x"` + recursão hex sobre `unsigned long`     |
