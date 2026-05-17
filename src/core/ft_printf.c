@@ -24,9 +24,8 @@ static int	dispatch(char spec, va_list args)
     case '%':
         return print_percent();
     default:
-        return 0; 
+        return (0);
     }
-    return (0);
 }
 
 int	ft_printf(const char *fmt, ...)

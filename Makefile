@@ -1,5 +1,4 @@
-NAME        := ftprintf
-STATIC_NAME := lib$(NAME).a
+NAME    := libftprintf.a
 
 CC      := cc
 AR      := ar
@@ -11,7 +10,6 @@ CFLAGS  += -Wpedantic -std=c11
 SRC_DIR    := src
 INC_DIR    := include
 BUILD_DIR  := build
-STATIC_DIR := $(BUILD_DIR)/static
 OBJ_DIR    := $(BUILD_DIR)/obj/static
 
 LIBFT_DIR  := libft
@@ -28,10 +26,9 @@ TEST_BIN := $(BUILD_DIR)/test_ftprintf
 
 # ---- Targets ----
 
-all: $(LIBFT) $(STATIC_DIR)/$(STATIC_NAME)
+all: $(LIBFT) $(NAME)
 
-$(STATIC_DIR)/$(STATIC_NAME): $(OBJS)
-	@mkdir -p $(STATIC_DIR)
+$(NAME): $(OBJS)
 	$(AR) $(ARFLAGS) $@ $^
 	@echo "Built: $@"
 
@@ -48,10 +45,10 @@ test: all $(TEST_BIN)
 	@echo "--- Running tests ---"
 	./$(TEST_BIN)
 
-$(TEST_BIN): $(TEST_SRC) $(STATIC_DIR)/$(STATIC_NAME) $(LIBFT)
+$(TEST_BIN): $(TEST_SRC) $(NAME) $(LIBFT)
 	@mkdir -p $(BUILD_DIR)
 	$(CC) $(filter-out -Werror,$(CFLAGS)) $(CPPFLAGS) $(TEST_SRC) -o $@ \
-		-L$(STATIC_DIR) -l$(NAME) \
+		$(NAME) \
 		-L$(LIBFT_DIR)/build/static -lft
 
 # ---- Clean ----
@@ -61,7 +58,7 @@ clean:
 	$(MAKE) -C $(LIBFT_DIR) clean
 
 fclean: clean
-	rm -f $(STATIC_DIR)/$(STATIC_NAME)
+	rm -f $(NAME)
 	rm -f $(TEST_BIN)
 	$(MAKE) -C $(LIBFT_DIR) fclean
 
