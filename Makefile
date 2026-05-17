@@ -1,7 +1,7 @@
 # =========================================================
 # Project
 # =========================================================
-NAME := libftprintf.a
+NAME := libftprintf
 
 
 # =========================================================
@@ -15,6 +15,9 @@ CFLAGS      += -Wpedantic -std=c11 # Enforce C11 standard and pedantic warnings
 CFLAGS      += -O2 # Optimize for speed (can be adjusted for debugging)
 CFLAGS      += -I$(INC_DIR)
 CFLAGS      += -MMD -MP # Dependency Generation
+
+CFLAGS += -I$(LIBFT_DIR)/include # Include libft headers for tests
+
 
 PIC_FLAGS    = -fPIC # Position Independent Code for shared library
 
@@ -42,6 +45,8 @@ OBJ_SHARED   = $(OBJ_DIR)/shared
 TEST_DIR     = $(BUILD_DIR)/tests
 BINS_DIR  = $(BUILD_DIR)/bins
 
+LIBFT_DIR = ./libft
+LIBFT = $(LIBFT_DIR)/build/static/libft.a
 
 # =========================================================
 # Library output
@@ -210,4 +215,14 @@ re: fclean all
 -include $(DEP_STATICS)
 -include $(DEP_SHAREDS)
 
-.PHONY: all clean fclean re
+.PHONY:\
+	all \
+	static \
+	shared \
+	tests \
+	test \
+	install \
+	uninstall \
+	clean \
+	fclean \
+	re
