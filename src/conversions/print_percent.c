@@ -1,11 +1,7 @@
 #include "ft_printf.h"
-# include "libft.h"
-#include <stdarg.h>
-#include <stdlib.h>
 
 int	print_percent(void)
 {
-
-    
-    return 0;
+	ft_putchar_fd('%', 1);
+	return (1);
 }
