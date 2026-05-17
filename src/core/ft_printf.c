@@ -3,23 +3,30 @@
 
 static int	dispatch(char spec, va_list args)
 {
-	if (spec == 'c')
-		return print_char(args);
-	if (spec == 's')
-		return print_str(args);
-	if (spec == 'd' || spec == 'i')
-		return print_int(args);
-	if (spec == 'u')
-		return print_uint(args);
-	if (spec == 'x')
-		return print_hex(args, 0);
-	if (spec == 'X')
-		return print_hex(args, 1);
-	if (spec == 'p')
-		return print_ptr(args);
-	if (spec == '%')
-		return print_percent();
-	return (0);
+    switch (spec)
+    {
+    case 'c':
+        return print_char(args);
+    case 's':
+        return print_str(args);
+    case 'd':
+        return print_int(args);
+    case 'i':
+        return print_int(args);
+    case 'u':
+        return print_uint(args);
+    case 'x':
+        return print_hex(args, 0);
+    case 'X':
+        return print_hex(args, 1);
+    case 'p':
+        return print_ptr(args);
+    case '%':
+        return print_percent();
+    default:
+        return 0; 
+    }
+    return (0);
 }
 
 int	ft_printf(const char *fmt, ...)
