@@ -1,23 +1,48 @@
-NAME := program
+NAME := libftprintf.a
 
 CC := cc
+AR := ar rcs
 
-CFLAGS := -Wall -Wextra -Werror
+CFLAGS := -Wall -Wextra -Werror 
 
-SRC := src/main.c
 
-OBJ := $(SRC:.c=.o)
+BUILD_DIR = build
+OBJ_DIR   = $(BUILD_DIR)/obj
+TEST_DIR  = $(BUILD_DIR)/tests
+BINS_DIR  = $(BUILD_DIR)/bins
 
-all: $(NAME)
 
-$(NAME): $(OBJ)
-	$(CC) $(CFLAGS) $(OBJ) -o $(NAME)
+
+LIB = $(BUILD_DIR)/$(NAME)
+
+SRC := $(wildcard src/*.c)
+
+OBJ := $(patsubst src/%.c,$(OBJ_DIR)/%.o,$(SRC))
+
+ 
+
+all: $(LIB)
+
+
+$(LIB): $(OBJ)
+	@mkdir -p $(BUILD_DIR)
+	$(AR) $@ $^
+	@echo "Built: $@  ($(words $(OBJ)) objects)"
+
+$(OBJ_DIR)/%.o: src/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(LIB): $(OBJ)
+	$(AR) $(LIB) $(OBJ)
+
+run: 
 
 clean:
 	rm -f $(OBJ)
 
 fclean: clean
-	rm -f $(NAME)
+	rm -f $(LIB)
 
 re: fclean all
 
