@@ -1,48 +1,52 @@
 #include "ft_printf.h"
-# include "libft.h"
 #include <stdarg.h>
 
-/* ft_printf("Olá %s, você tem %d anos", "João", 30)
-         ↓
-percorre char a char a string fmt
-  - se não é '%' → escreve o char diretamente, conta +1
-  - se é '%' → avança para o próximo char (o especificador)
-    - lê o especificador ('s', 'd', etc.)
-    - chama a função certa passando va_arg
-    - conta os chars escritos
-retorna o total de chars escritos */
-
+static int	dispatch(char spec, va_list args)
+{
+	if (spec == 'c')
+		return print_char(args);
+	if (spec == 's')
+		return print_str(args);
+	if (spec == 'd' || spec == 'i')
+		return print_int(args);
+	if (spec == 'u')
+		return print_uint(args);
+	if (spec == 'x')
+		return print_hex(args, 0);
+	if (spec == 'X')
+		return print_hex(args, 1);
+	if (spec == 'p')
+		return print_ptr(args);
+	if (spec == '%')
+		return print_percent();
+	return (0);
+}
 
 int	ft_printf(const char *fmt, ...)
 {
-    va_list	args;
-    int		result;
-    int     i;
+	va_list	args;
+	int		count;
+	int		i;
 
-    result = 0;
-
-    va_start(args, fmt);
-    for(i=0; fmt[i] != '\0'; i++)
-    {
-        if (fmt[i] != '%')
-        {
-            ft_putchar_fd(fmt[i], 1);
-            result++;
-            
-        }else
-        {
-            i++;
-            t_format format;
-            parse_format(fmt + i, &format);
-            int conv_len = dispatch_conversion(&format, args);
-            if (conv_len < 0)
-                return (-1);
-            result += conv_len;
-            // Avança i para pular o formato completo
-            while (fmt[i] && !ft_strchr("cspdiuxX%", fmt[i]))
-                i++;
-        }
-    }
-    va_end(args);
-    return (result);
+	count = 0;
+	i = 0;
+	va_start(args, fmt);
+	while (fmt[i])
+	{
+		if (fmt[i] != '%')
+		{
+			ft_putchar_fd(fmt[i], 1);
+			count++;
+		}
+		else
+		{
+			i++;
+			if (!fmt[i])
+				break ;
+			count += dispatch(fmt[i], args);
+		}
+		i++;
+	}
+	va_end(args);
+	return (count);
 }
