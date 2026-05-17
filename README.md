@@ -1,91 +1,114 @@
+*This project has been created as part of the 42 curriculum by Milsonyujiaoki.*
+
 # ft_printf
 
 ## Description
 
-42 School project — implementação customizada de `printf` construída sobre a
-[libft](./libft/README.md).
+Reimplementação da função `printf` da libc em C puro, construída sobre a
+[libft](./libft/README.md) pessoal.
 
-## Objectives
+A função suporta as seguintes conversões: `%c` `%s` `%p` `%d` `%i` `%u` `%x` `%X` `%%`
 
-- Learn systems programming
-- Improve C skills
-- Develop software engineering practices
+O resultado é empacotado na biblioteca estática `libftprintf.a`.
 
-## Dependencies
+## Instructions
 
-| Dependency | Localização | Compilada automaticamente |
-|------------|-------------|--------------------------|
-| libft      | `./libft`   | Sim (`make static/shared`) |
-
-## Build
+### Compilar a biblioteca
 
 ```bash
-# Biblioteca estática (padrão)
-make
-
-# Biblioteca compartilhada
-make shared
-
-# Ambas
-make static shared
+make          # compila libftprintf.a em build/static/
 ```
 
-A libft é compilada automaticamente se ainda não estiver em `libft/build/`.
+A libft é compilada automaticamente via `$(MAKE) -C libft static`.
 
-## Linking
-
-### Estática (`libftprintf.a`)
-
-A libft é **embutida** no arquivo. Basta linkar com uma flag:
+### Rodar os testes
 
 ```bash
-cc main.c -Ibuild/static -lftprintf -o programa
+make test     # compila e executa tests/test_ftprintf.c
 ```
 
-### Compartilhada (`libftprintf.so`)
-
-A libft é uma **dependência dinâmica**. Ambas as `.so` precisam estar
-acessíveis em runtime:
+### Linkar na sua aplicação
 
 ```bash
-LD_LIBRARY_PATH=build/shared:libft/build/shared \
-  cc main.c -Lbuild/shared -lftprintf -o programa
+cc main.c \
+  -Iinclude -Ilibft/include \
+  -Lbuild/static -lftprintf \
+  -Llibft/build/static -lft \
+  -o programa
 ```
 
-## Testes
+### Targets disponíveis
 
-```bash
-make test
-```
+| Target      | Efeito                                      |
+|-------------|---------------------------------------------|
+| `all`       | Compila `libftprintf.a`                     |
+| `test`      | Compila e executa a suíte de testes         |
+| `clean`     | Remove objetos (`.o`) do ft_printf e libft  |
+| `fclean`    | `clean` + remove a lib e o binário de teste |
+| `re`        | `fclean` + `all`                            |
 
-## Limpeza
+## Algorithm & Data Structure
 
-```bash
-make clean        # Remove build/ do ft_printf
-make fclean       # Remove build/ do ft_printf e da libft
-make libft_clean  # Remove build/ somente da libft
-make re           # fclean + all
-```
+### Algoritmo principal (`ft_printf`)
 
-## Instalação
+O loop percorre a string de formato caractere a caractere:
 
-```bash
-make install              # Instala em /usr/local (padrão)
-make install PREFIX=~/local
-make uninstall
-```
+1. Se o caractere **não é `%`** → escreve direto com `ft_putchar_fd` e incrementa o contador.
+2. Se é `%` → avança um caractere e chama `dispatch(spec, args)`.
+
+`dispatch` é uma cadeia de `if/return` que mapeia o especificador para a
+função de conversão correta. Não há tabela de ponteiros nem `switch` —
+a simplicidade é intencional para facilitar a leitura e a manutenção.
+
+### Funções de conversão
+
+Cada especificador tem seu próprio arquivo em `src/conversions/`. Todas
+recebem `va_list args` e retornam o número de caracteres escritos.
+
+| Especificador | Arquivo            | Estratégia                                              |
+|---------------|--------------------|---------------------------------------------------------|
+| `%c`          | `print_char.c`     | `va_arg` → `ft_putchar_fd`                              |
+| `%s`          | `print_str.c`      | `va_arg` → guarda `"(null)"` se NULL → `ft_putstr_fd`  |
+| `%d` / `%i`   | `print_int.c`      | `ft_itoa` → `ft_putstr_fd` → `ft_free`                 |
+| `%u`          | `print_uint.c`     | recursão simples, dígito a dígito                       |
+| `%x` / `%X`   | `print_hex.c`      | recursão com base `"0123456789abcdef"` ou `"ABCDEF"`    |
+| `%p`          | `print_ptr.c`      | prefixo `"0x"` + recursão hex sobre `unsigned long`     |
+| `%%`          | `print_percent.c`  | escreve `'%'` direto                                    |
+
+A recursão para `%u`, `%x` e `%p` é a estrutura mais natural para
+conversão de base: resolve os dígitos do mais significativo para o
+menos significativo sem precisar de buffer ou reversão de string.
 
 ## Structure
 
 ```
 src/
-  conversions/   # Implementações de %c %s %d %i %u %x %X %p %%
-  core/          # ft_printf, parser, dispatcher
-  utils/         # Helpers internos
+  conversions/   # print_char, print_str, print_int, print_uint,
+                 # print_hex, print_ptr, print_percent
+  core/          # ft_printf.c — loop principal + dispatch
 include/
-  core/          # ft_printf.h
-libft/           # Dependência — libft estática e compartilhada
-tests/           # Suítes de teste por conversão
-docs/
+  ft_printf.h    # protótipo público + protótipos internos
+libft/           # dependência — compilada como estática
+tests/
+  test_ftprintf.c
+build/
+  static/        # libftprintf.a
+  obj/static/    # arquivos objeto
 ```
+
+## Resources
+
+- [man 3 printf](https://www.man7.org/linux/man-pages/man3/printf.3.html) — especificação de comportamento esperado
+- [cppreference — va_arg](https://en.cppreference.com/w/c/variadic) — funções variádicas em C
+- [42 Norm v4](https://github.com/42School/norminette) — norma de estilo obrigatória
+
+### Uso de IA
+
+O GitHub Copilot foi utilizado como ferramenta de auxílio nos seguintes aspectos:
+
+- **Makefile**: estrutura de regras com `patsubst`, `wildcard` e compilação em cascata da libft.
+- **Testes**: geração dos casos de teste comparativos entre `ft_printf` e `printf`.
+- **Depuração de includes**: identificação do caminho correto de include dado o `-I` do CPPFLAGS.
+
+Todo o algoritmo central, as conversões e a lógica de dispatch foram raciocidados e implementados manualmente antes de qualquer consulta à IA.
 
