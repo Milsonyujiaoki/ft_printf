@@ -1,67 +1,212 @@
-NAME    := libftprintf.a
+# =========================================================
+# Compiler / Archiver
+# =========================================================
 
-CC      := cc
-AR      := ar
-ARFLAGS := rcs
+CC       = gcc
+AR       = ar
+ARFLAGS  = rcs
 
-CFLAGS  := -Wall -Wextra -Werror
-CFLAGS  += -Wpedantic -std=c11
+# =========================================================
+# Project
+# =========================================================
 
-SRC_DIR    := src
-INC_DIR    := include
-BUILD_DIR  := build
-OBJ_DIR    := $(BUILD_DIR)/obj/static
+NAME     = libftprintf
 
-LIBFT_DIR  := libft
-LIBFT      := $(LIBFT_DIR)/build/static/libft.a
+# =========================================================
+# Directories
+# =========================================================
 
-CPPFLAGS   := -I$(INC_DIR) -I$(LIBFT_DIR)/include
+SRC_DIR      = src
+TEST_SRC_DIR = tests
+INC_DIR      = include
 
-SRCS := $(wildcard $(SRC_DIR)/core/*.c) \
-        $(wildcard $(SRC_DIR)/conversions/*.c)
-OBJS := $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRCS))
+BUILD_DIR    = build
 
-TEST_SRC := tests/test_ftprintf.c
-TEST_BIN := $(BUILD_DIR)/test_ftprintf
+STATIC_DIR   = $(BUILD_DIR)/static
+SHARED_DIR   = $(BUILD_DIR)/shared
 
-# ---- Targets ----
+OBJ_DIR      = $(BUILD_DIR)/obj
+OBJ_STATIC   = $(OBJ_DIR)/static
+OBJ_SHARED   = $(OBJ_DIR)/shared
 
-all: $(LIBFT) $(NAME)
+TEST_DIR     = $(BUILD_DIR)/tests
 
-$(NAME): $(OBJS)
-	$(AR) $(ARFLAGS) $@ $^
-	@echo "Built: $@"
+# =========================================================
+# Dependency: libft
+# =========================================================
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
-	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
+LIBFT_DIR  = libft
+LIBFT      = $(LIBFT_DIR)/build/static/libft.a
+
+# =========================================================
+# Library output
+# =========================================================
+
+STATIC_LIB     = $(STATIC_DIR)/$(NAME).a
+
+SHARED_MAJOR   = 1
+SHARED_VERSION = $(SHARED_MAJOR).0.0
+SHARED_SONAME  = $(NAME).so.$(SHARED_MAJOR)
+SHARED_LIB     = $(SHARED_DIR)/$(NAME).so.$(SHARED_VERSION)
+SHARED_LINK    = $(SHARED_DIR)/$(NAME).so
+
+# =========================================================
+# Compiler flags
+# =========================================================
+
+CFLAGS     = -Wall -Wextra -Werror
+CFLAGS    += -Wpedantic -std=c11
+CFLAGS    += -O2
+CFLAGS    += -I$(INC_DIR) -I$(LIBFT_DIR)/include
+CFLAGS    += -MMD -MP
+
+PIC_FLAGS  = -fPIC
+
+LDFLAGS    = -L$(STATIC_DIR) -lftprintf -L$(LIBFT_DIR)/build/static -lft
+
+SHARED_LDFLAGS = -shared -Wl,-soname,$(SHARED_SONAME)
+
+# =========================================================
+# Debug
+# =========================================================
+
+DEBUG_FLAGS  = -g3
+DEBUG_FLAGS += -fsanitize=address,undefined
+
+debug: CFLAGS  += $(DEBUG_FLAGS)
+debug: LDFLAGS += -fsanitize=address,undefined
+debug: all
+
+# =========================================================
+# Sources
+# =========================================================
+
+SRC         = $(wildcard $(SRC_DIR)/*/*.c)
+
+OBJ_STATICS = $(patsubst $(SRC_DIR)/%.c,$(OBJ_STATIC)/%.o,$(SRC))
+OBJ_SHAREDS = $(patsubst $(SRC_DIR)/%.c,$(OBJ_SHARED)/%.o,$(SRC))
+
+DEP_STATICS = $(OBJ_STATICS:.o=.d)
+DEP_SHAREDS = $(OBJ_SHAREDS:.o=.d)
+
+# =========================================================
+# Tests
+# =========================================================
+
+TESTS     = $(wildcard $(TEST_SRC_DIR)/*.c)
+TEST_BINS = $(patsubst $(TEST_SRC_DIR)/%.c,$(TEST_DIR)/%,$(TESTS))
+
+# =========================================================
+# Main targets
+# =========================================================
+
+all: $(LIBFT) static tests
+
+static: $(STATIC_LIB)
+
+shared: $(LIBFT) $(SHARED_LIB)
+
+tests: $(TEST_BINS)
+
+# =========================================================
+# Build libft
+# =========================================================
 
 $(LIBFT):
 	$(MAKE) -C $(LIBFT_DIR) static
 
-# ---- Test ----
+# =========================================================
+# Static objects
+# =========================================================
 
-test: all $(TEST_BIN)
-	@echo "--- Running tests ---"
-	./$(TEST_BIN)
+$(OBJ_STATIC)/%.o: $(SRC_DIR)/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c $< -o $@
 
-$(TEST_BIN): $(TEST_SRC) $(NAME) $(LIBFT)
-	@mkdir -p $(BUILD_DIR)
-	$(CC) $(filter-out -Werror,$(CFLAGS)) $(CPPFLAGS) $(TEST_SRC) -o $@ \
-		$(NAME) \
-		-L$(LIBFT_DIR)/build/static -lft
+# =========================================================
+# Shared objects (PIC)
+# =========================================================
 
-# ---- Clean ----
+$(OBJ_SHARED)/%.o: $(SRC_DIR)/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) $(PIC_FLAGS) -c $< -o $@
+
+# =========================================================
+# Static library
+# =========================================================
+
+$(STATIC_LIB): $(OBJ_STATICS)
+	@mkdir -p $(STATIC_DIR)
+	$(AR) $(ARFLAGS) $@ $^
+	@echo "Built static library: $@"
+
+# =========================================================
+# Shared library
+# =========================================================
+
+$(SHARED_LIB): $(OBJ_SHAREDS)
+	@mkdir -p $(SHARED_DIR)
+	$(CC) $(SHARED_LDFLAGS) -o $@ $^
+	ln -sfn $(notdir $@) $(SHARED_LINK)
+	@echo "Built shared library: $@"
+
+# =========================================================
+# Test binaries
+# =========================================================
+
+$(TEST_DIR)/%: $(TEST_SRC_DIR)/%.c $(STATIC_LIB)
+	@mkdir -p $(dir $@)
+	$(CC) $(filter-out -Werror,$(CFLAGS)) $< $(LDFLAGS) -o $@
+
+# =========================================================
+# Run tests
+# =========================================================
+
+test: all
+	@echo ""
+	@echo "========================================"
+	@echo " Running test suite"
+	@echo "========================================"
+	@PASS=0; FAIL=0; \
+	for bin in $(TEST_BINS); do \
+		if [ -f $$bin ]; then \
+			echo ""; \
+			echo "--- $$bin ---"; \
+			$$bin; \
+			if [ $$? -eq 0 ]; then \
+				PASS=$$((PASS+1)); \
+			else \
+				FAIL=$$((FAIL+1)); \
+			fi; \
+		fi; \
+	done; \
+	echo ""; \
+	echo "========================================"; \
+	echo " Suites: $$PASS passed, $$FAIL failed"; \
+	echo "========================================"; \
+	[ $$FAIL -eq 0 ]
+
+# =========================================================
+# Cleanup
+# =========================================================
 
 clean:
-	rm -rf $(OBJ_DIR)
+	rm -rf $(BUILD_DIR)
 	$(MAKE) -C $(LIBFT_DIR) clean
 
 fclean: clean
-	rm -f $(NAME)
-	rm -f $(TEST_BIN)
-	$(MAKE) -C $(LIBFT_DIR) fclean
 
 re: fclean all
 
-.PHONY: all test clean fclean re
+# =========================================================
+# Dependency files
+# =========================================================
+
+-include $(DEP_STATICS)
+-include $(DEP_SHAREDS)
+
+# =========================================================
+# Phony
+# =========================================================
+
+.PHONY: all static shared tests test debug clean fclean re
