@@ -50,7 +50,7 @@ PIC_FLAGS = -fPIC
 
 # libft.so shipped in lib/ (soname = libft.so.1)
 LIB_SONAME = $(LIB_DIR)/libft.so.1
-LDFLAGS    = $(STATIC_LIB) -L$(LIB_DIR) -lft -Wl,-rpath,$(abspath $(LIB_DIR))
+LDFLAGS    = -L$(LIB_DIR) -lft -Wl,-rpath,$(abspath $(LIB_DIR))
 
 SHARED_LDFLAGS = -shared -Wl,-soname,$(SHARED_SONAME) -L$(LIB_DIR) -lft \
                  -Wl,-rpath,$(abspath $(LIB_DIR))
@@ -85,21 +85,25 @@ TEST_BINS = $(patsubst $(TEST_SRC_DIR)/%.c,$(TEST_DIR)/%,$(TESTS))
 # Main targets
 # =========================================================
 
-all: $(STATIC_LIB) tests
+all: $(STATIC_LIB)
 
 shared: $(SHARED_LIB)
 	@ln -sf $(NAME).so.$(SHARED_VERSION) $(SHARED_MAJOR)
 	@ln -sf $(SHARED_SONAME)             $(SHARED_LINK)
 	@echo "Built shared library: $(SHARED_LIB)"
 
-tests: $(LIB_SONAME) $(TEST_BINS)
+tests: $(LIB_SONAME) $(STATIC_LIB) $(TEST_BINS)
 
 # =========================================================
 # soname symlink for libft.so.1
 # =========================================================
 
 $(LIB_SONAME):
-	ln -sf libft.so $@
+	@if [ ! -f $(LIB_DIR)/libft.so ]; then \
+		echo "Error: libft.so not found in $(LIB_DIR)"; \
+		exit 1; \
+	fi
+	@ln -sf libft.so $@
 
 # =========================================================
 # Static library (libftprintf.a at repo root)
@@ -115,7 +119,7 @@ $(STATIC_LIB): $(OBJS)
 
 $(SHARED_LIB): $(PIC_OBJS) $(LIB_SONAME)
 	@mkdir -p $(SHARED_DIR)
-	$(CC) $(PIC_FLAGS) $(SHARED_LDFLAGS) $^ -o $@
+	$(CC) $(PIC_FLAGS) $(SHARED_LDFLAGS) $(PIC_OBJS) -o $@
 
 # =========================================================
 # Object files (static)
@@ -137,15 +141,15 @@ $(PIC_OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 # Test binaries
 # =========================================================
 
-$(TEST_DIR)/%: $(TEST_SRC_DIR)/%.c $(STATIC_LIB)
+$(TEST_DIR)/%: $(TEST_SRC_DIR)/%.c $(STATIC_LIB) $(LIB_SONAME)
 	@mkdir -p $(dir $@)
-	$(CC) $(filter-out -Werror,$(CFLAGS)) $< $(LDFLAGS) -o $@
+	$(CC) $(filter-out -Werror,$(CFLAGS)) $< $(STATIC_LIB) $(LDFLAGS) -o $@
 
 # =========================================================
 # Run tests
 # =========================================================
 
-test: all
+test: tests
 	@echo ""
 	@echo "========================================"
 	@echo " Running test suite"
