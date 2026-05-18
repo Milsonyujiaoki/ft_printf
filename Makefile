@@ -2,15 +2,15 @@
 # Compiler / Archiver
 # =========================================================
 
-CC       = gcc
-AR       = ar
-ARFLAGS  = rcs
+CC      = gcc
+AR      = ar
+ARFLAGS = rcs
 
 # =========================================================
 # Project
 # =========================================================
 
-NAME     = libftprintf
+NAME = libftprintf
 
 # =========================================================
 # Directories
@@ -19,59 +19,47 @@ NAME     = libftprintf
 SRC_DIR      = src
 TEST_SRC_DIR = tests
 INC_DIR      = include
+LIB_DIR      = lib
 
 BUILD_DIR    = build
-
-STATIC_DIR   = $(BUILD_DIR)/static
-SHARED_DIR   = $(BUILD_DIR)/shared
-
 OBJ_DIR      = $(BUILD_DIR)/obj
-OBJ_STATIC   = $(OBJ_DIR)/static
-OBJ_SHARED   = $(OBJ_DIR)/shared
-
+PIC_OBJ_DIR  = $(BUILD_DIR)/pic
+SHARED_DIR   = $(BUILD_DIR)/shared
 TEST_DIR     = $(BUILD_DIR)/tests
 
 # =========================================================
-# Dependency: libft
+# Library outputs
 # =========================================================
 
-LIBFT_DIR  = libft
-LIBFT      = $(LIBFT_DIR)/build/static/libft.a
+# Static — required by subject (at repo root)
+STATIC_LIB = $(NAME).a
 
-# =========================================================
-# Library output
-# =========================================================
-
-STATIC_LIB     = $(STATIC_DIR)/$(NAME).a
-
-SHARED_MAJOR   = 1
-SHARED_VERSION = $(SHARED_MAJOR).0.0
-SHARED_SONAME  = $(NAME).so.$(SHARED_MAJOR)
+# Shared — versioned in build/shared/
+SHARED_VERSION = 1.0.1
+SHARED_SONAME  = $(NAME).so.1
 SHARED_LIB     = $(SHARED_DIR)/$(NAME).so.$(SHARED_VERSION)
+SHARED_MAJOR   = $(SHARED_DIR)/$(SHARED_SONAME)
 SHARED_LINK    = $(SHARED_DIR)/$(NAME).so
 
 # =========================================================
 # Compiler flags
 # =========================================================
 
-CFLAGS     = -Wall -Wextra -Werror
-CFLAGS    += -Wpedantic -std=c11
-CFLAGS    += -O2
-CFLAGS    += -I$(INC_DIR) -I$(LIBFT_DIR)/include
-CFLAGS    += -MMD -MP
+CFLAGS    = -Wall -Wextra -Werror -Wpedantic -std=c11 -O2 -I$(INC_DIR) -I$(LIB_DIR) -MMD -MP
+PIC_FLAGS = -fPIC
 
-PIC_FLAGS  = -fPIC
+# libft.so shipped in lib/ (soname = libft.so.1)
+LIB_SONAME = $(LIB_DIR)/libft.so.1
+LDFLAGS    = $(STATIC_LIB) -L$(LIB_DIR) -lft -Wl,-rpath,$(abspath $(LIB_DIR))
 
-LDFLAGS    = -L$(STATIC_DIR) -lftprintf -L$(LIBFT_DIR)/build/static -lft
-
-SHARED_LDFLAGS = -shared -Wl,-soname,$(SHARED_SONAME)
+SHARED_LDFLAGS = -shared -Wl,-soname,$(SHARED_SONAME) -L$(LIB_DIR) -lft \
+                 -Wl,-rpath,$(abspath $(LIB_DIR))
 
 # =========================================================
 # Debug
 # =========================================================
 
-DEBUG_FLAGS  = -g3
-DEBUG_FLAGS += -fsanitize=address,undefined
+DEBUG_FLAGS = -g3 -fsanitize=address,undefined
 
 debug: CFLAGS  += $(DEBUG_FLAGS)
 debug: LDFLAGS += -fsanitize=address,undefined
@@ -81,13 +69,10 @@ debug: all
 # Sources
 # =========================================================
 
-SRC         = $(wildcard $(SRC_DIR)/*/*.c)
-
-OBJ_STATICS = $(patsubst $(SRC_DIR)/%.c,$(OBJ_STATIC)/%.o,$(SRC))
-OBJ_SHAREDS = $(patsubst $(SRC_DIR)/%.c,$(OBJ_SHARED)/%.o,$(SRC))
-
-DEP_STATICS = $(OBJ_STATICS:.o=.d)
-DEP_SHAREDS = $(OBJ_SHAREDS:.o=.d)
+SRC      = $(wildcard $(SRC_DIR)/*/*.c)
+OBJS     = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRC))
+PIC_OBJS = $(patsubst $(SRC_DIR)/%.c,$(PIC_OBJ_DIR)/%.o,$(SRC))
+DEPS     = $(OBJS:.o=.d) $(PIC_OBJS:.o=.d)
 
 # =========================================================
 # Tests
@@ -100,55 +85,53 @@ TEST_BINS = $(patsubst $(TEST_SRC_DIR)/%.c,$(TEST_DIR)/%,$(TESTS))
 # Main targets
 # =========================================================
 
-all: $(LIBFT) static tests
+all: $(STATIC_LIB) tests
 
-static: $(STATIC_LIB)
+shared: $(SHARED_LIB)
+	@ln -sf $(NAME).so.$(SHARED_VERSION) $(SHARED_MAJOR)
+	@ln -sf $(SHARED_SONAME)             $(SHARED_LINK)
+	@echo "Built shared library: $(SHARED_LIB)"
 
-shared: $(LIBFT) $(SHARED_LIB)
-
-tests: $(TEST_BINS)
-
-# =========================================================
-# Build libft
-# =========================================================
-
-$(LIBFT):
-	$(MAKE) -C $(LIBFT_DIR) static
+tests: $(LIB_SONAME) $(TEST_BINS)
 
 # =========================================================
-# Static objects
+# soname symlink for libft.so.1
 # =========================================================
 
-$(OBJ_STATIC)/%.o: $(SRC_DIR)/%.c
-	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c $< -o $@
+$(LIB_SONAME):
+	ln -sf libft.so $@
 
 # =========================================================
-# Shared objects (PIC)
+# Static library (libftprintf.a at repo root)
 # =========================================================
 
-$(OBJ_SHARED)/%.o: $(SRC_DIR)/%.c
-	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) $(PIC_FLAGS) -c $< -o $@
-
-# =========================================================
-# Static library
-# =========================================================
-
-$(STATIC_LIB): $(OBJ_STATICS)
-	@mkdir -p $(STATIC_DIR)
+$(STATIC_LIB): $(OBJS)
 	$(AR) $(ARFLAGS) $@ $^
 	@echo "Built static library: $@"
 
 # =========================================================
-# Shared library
+# Shared library (build/shared/libftprintf.so.1.0.1)
 # =========================================================
 
-$(SHARED_LIB): $(OBJ_SHAREDS)
+$(SHARED_LIB): $(PIC_OBJS) $(LIB_SONAME)
 	@mkdir -p $(SHARED_DIR)
-	$(CC) $(SHARED_LDFLAGS) -o $@ $^
-	ln -sfn $(notdir $@) $(SHARED_LINK)
-	@echo "Built shared library: $@"
+	$(CC) $(PIC_FLAGS) $(SHARED_LDFLAGS) $^ -o $@
+
+# =========================================================
+# Object files (static)
+# =========================================================
+
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# =========================================================
+# Object files (PIC — for shared)
+# =========================================================
+
+$(PIC_OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) $(PIC_FLAGS) -c $< -o $@
 
 # =========================================================
 # Test binaries
@@ -192,9 +175,10 @@ test: all
 
 clean:
 	rm -rf $(BUILD_DIR)
-	$(MAKE) -C $(LIBFT_DIR) clean
+	rm -f $(LIB_SONAME)
 
 fclean: clean
+	rm -f $(STATIC_LIB)
 
 re: fclean all
 
@@ -202,11 +186,10 @@ re: fclean all
 # Dependency files
 # =========================================================
 
--include $(DEP_STATICS)
--include $(DEP_SHAREDS)
+-include $(DEPS)
 
 # =========================================================
 # Phony
 # =========================================================
 
-.PHONY: all static shared tests test debug clean fclean re
+.PHONY: all shared tests test debug clean fclean re
