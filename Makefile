@@ -31,6 +31,8 @@ CFLAGS += -O2
 CFLAGS += -I$(INC_DIR)
 CFLAGS += -I$(LIBFT_DIR)
 
+TEST_FLAGS := -Wall -Wextra -std=c11 -O2
+
 ifdef DEBUG
 CFLAGS += -g3
 CFLAGS += -fsanitize=address,undefined
@@ -83,7 +85,7 @@ $(OBJ_DIR)/%.o: src/%.c
 
 test: all
 	@mkdir -p build/tests
-	$(CC) $(CFLAGS) $(LDFLAGS) \
+	$(CC) $(TEST_FLAGS) \
 		tests/test_ftprintf.c \
 		$(NAME) \
 		$(LIBFT) \
