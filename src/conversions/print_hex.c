@@ -1,4 +1,4 @@
-#include "ft_printf.h"
+#include "../../include/ft_printf.h"
 
 static int	put_hex(unsigned int n, const char *base)
 {
@@ -11,12 +11,13 @@ static int	put_hex(unsigned int n, const char *base)
 	return (count + 1);
 }
 
-int	print_hex(va_list args, int uppercase)
+int	print_hex(t_format *fmt, va_list args)
 {
 	unsigned int	n;
 	const char		*base;
 
 	n = va_arg(args, unsigned int);
-	base = uppercase ? "0123456789ABCDEF" : "0123456789abcdef";
+	base = (fmt->specifier == SP_HEX_UP) ? "0123456789ABCDEF" : "0123456789abcdef";
+	(void)fmt;
 	return (put_hex(n, base));
 }

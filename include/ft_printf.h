@@ -2,18 +2,63 @@
 # define FT_PRINTF_H
 
 # include <stdarg.h>
-# include "libft.h"
+# include <unistd.h>
+# include <stdint.h>
+# include <limits.h>
+# include <stddef.h>
+# include <stdlib.h>
+# include <stdio.h>
+# include "../lib/libft.h"
+
+typedef struct s_format
+{
+    char specifier;
+    int width;
+    int precision;
+    int zero;
+    int left_align;
+    int plus;
+    int space;
+    int hash;
+} t_format;
+
+
+typedef struct s_dispatch
+{
+    char specifier;
+    int (*fn)(t_format *, va_list);
+} t_dispatch;
+
+typedef enum e_specifier
+{
+	SP_CHAR = 'c',
+	SP_STR = 's',
+	SP_PTR = 'p',
+	SP_DEC = 'd',
+	SP_INT = 'i',
+	SP_UINT = 'u',
+	SP_HEX_LOW = 'x',
+	SP_HEX_UP = 'X',
+	SP_PERCENT = '%'
+}	t_specifier;
+
 
 /* core */
 int		ft_printf(const char *fmt, ...);
 
 /* conversions — internal */
-int		print_char(va_list args);
-int		print_str(va_list args);
-int		print_int(va_list args);
-int		print_uint(va_list args);
-int		print_hex(va_list args, int uppercase);
-int		print_ptr(va_list args);
-int		print_percent(void);
+int 	print_char(t_format *fmt, va_list args);
+int 	print_str(t_format *fmt, va_list args);
+int 	print_int(t_format *fmt, va_list args);
+int 	print_uint(t_format *fmt, va_list args);
+int 	print_hex(t_format *fmt, va_list args);
+int 	print_ptr(t_format *fmt, va_list args);
+int	    print_percent(t_format *fmt, va_list args);
+
+/* utils */
+
+int     put_char_len(char c);
+int     put_str_len(const char *str, int precision);
+int	    putnbr_base_len(uintptr_t n, const char *base);
 
 #endif

@@ -1,6 +1,6 @@
-#include "ft_printf.h"
+#include "../../include/ft_printf.h"
 
-int	print_int(va_list args)
+int	print_int(t_format *fmt, va_list args)
 {
 	int		n;
 	char	*s;
@@ -11,5 +11,6 @@ int	print_int(va_list args)
 	len = (int)ft_strlen(s);
 	ft_putstr_fd(s, 1);
 	ft_free(s);
+	(void)fmt;
 	return (len);
 }

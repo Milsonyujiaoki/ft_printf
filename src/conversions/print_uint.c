@@ -1,4 +1,4 @@
-#include "ft_printf.h"
+#include "../../include/ft_printf.h"
 
 static int	put_uint(unsigned int n)
 {
@@ -11,7 +11,8 @@ static int	put_uint(unsigned int n)
 	return (count + 1);
 }
 
-int	print_uint(va_list args)
+int	print_uint(t_format *fmt, va_list args)
 {
+	(void)fmt;
 	return (put_uint(va_arg(args, unsigned int)));
 }

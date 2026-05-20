@@ -1,199 +1,112 @@
 # =========================================================
-# Compiler / Archiver
-# =========================================================
-
-CC      = gcc
-AR      = ar
-ARFLAGS = rcs
-
-# =========================================================
 # Project
 # =========================================================
 
-NAME = libftprintf
+NAME := libftprintf.a
+TEST := build/tests/test_ftprintf
 
 # =========================================================
 # Directories
 # =========================================================
 
-SRC_DIR      = src
-TEST_SRC_DIR = tests
-INC_DIR      = include
-LIB_DIR      = lib
-
-BUILD_DIR    = build
-OBJ_DIR      = $(BUILD_DIR)/obj
-PIC_OBJ_DIR  = $(BUILD_DIR)/pic
-SHARED_DIR   = $(BUILD_DIR)/shared
-TEST_DIR     = $(BUILD_DIR)/tests
+SRC_DIR := src
+OBJ_DIR := build/obj
+INC_DIR := include
+LIBFT_DIR := lib
 
 # =========================================================
-# Library outputs
+# Compiler
 # =========================================================
 
-# Static — required by subject (at repo root)
-STATIC_LIB = $(NAME).a
-
-# Shared — versioned in build/shared/
-SHARED_VERSION = 1.0.1
-SHARED_SONAME  = $(NAME).so.1
-SHARED_LIB     = $(SHARED_DIR)/$(NAME).so.$(SHARED_VERSION)
-SHARED_MAJOR   = $(SHARED_DIR)/$(SHARED_SONAME)
-SHARED_LINK    = $(SHARED_DIR)/$(NAME).so
+CC := cc
+AR := ar rcs
 
 # =========================================================
-# Compiler flags
+# Flags
 # =========================================================
 
-CFLAGS    = -Wall -Wextra -Werror -Wpedantic -std=c11 -O2 -I$(INC_DIR) -I$(LIB_DIR) -MMD -MP
-PIC_FLAGS = -fPIC
+CFLAGS := -Wall -Wextra -Werror
+CFLAGS += -Wpedantic -std=c11
+CFLAGS += -O2
+CFLAGS += -I$(INC_DIR)
+CFLAGS += -I$(LIBFT_DIR)
 
-# libft.so shipped in lib/ (soname = libft.so.1)
-LIB_SONAME = $(LIB_DIR)/libft.so.1
-LDFLAGS    = -L$(LIB_DIR) -lft -Wl,-rpath,$(abspath $(LIB_DIR))
-
-SHARED_LDFLAGS = -shared -Wl,-soname,$(SHARED_SONAME) -L$(LIB_DIR) -lft \
-                 -Wl,-rpath,$(abspath $(LIB_DIR))
-
-# =========================================================
-# Debug
-# =========================================================
-
-DEBUG_FLAGS = -g3 -fsanitize=address,undefined
-
-debug: CFLAGS  += $(DEBUG_FLAGS)
-debug: LDFLAGS += -fsanitize=address,undefined
-debug: all
+ifdef DEBUG
+CFLAGS += -g3
+CFLAGS += -fsanitize=address,undefined
+LDFLAGS += -fsanitize=address,undefined
+endif
 
 # =========================================================
 # Sources
 # =========================================================
 
-SRC      = $(wildcard $(SRC_DIR)/*/*.c)
-OBJS     = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRC))
-PIC_OBJS = $(patsubst $(SRC_DIR)/%.c,$(PIC_OBJ_DIR)/%.o,$(SRC))
-DEPS     = $(OBJS:.o=.d) $(PIC_OBJS:.o=.d)
+SRC := \
+	src/core/ft_printf.c \
+	src/conversions/print_char.c \
+	src/conversions/print_str.c \
+	src/conversions/print_int.c \
+	src/conversions/print_uint.c \
+	src/conversions/print_hex.c \
+	src/conversions/print_ptr.c \
+	src/conversions/print_percent.c \
+	src/utils/ft_print_utils.c
+
+OBJ := $(SRC:src/%.c=$(OBJ_DIR)/%.o)
+DEP := $(OBJ:.o=.d)
 
 # =========================================================
-# Tests
+# Libft
 # =========================================================
 
-TESTS     = $(wildcard $(TEST_SRC_DIR)/*.c)
-TEST_BINS = $(patsubst $(TEST_SRC_DIR)/%.c,$(TEST_DIR)/%,$(TESTS))
+LIBFT := $(LIBFT_DIR)/libft.a
 
 # =========================================================
-# Main targets
+# Rules
 # =========================================================
 
-all: $(STATIC_LIB)
+all: $(LIBFT) $(NAME)
 
-shared: $(SHARED_LIB)
-	@ln -sf $(NAME).so.$(SHARED_VERSION) $(SHARED_MAJOR)
-	@ln -sf $(SHARED_SONAME)             $(SHARED_LINK)
-	@echo "Built shared library: $(SHARED_LIB)"
+$(LIBFT):
+	make -C $(LIBFT_DIR)
 
-tests: $(LIB_SONAME) $(STATIC_LIB) $(TEST_BINS)
+$(NAME): $(OBJ)
+	$(AR) $@ $^
 
-# =========================================================
-# soname symlink for libft.so.1
-# =========================================================
-
-$(LIB_SONAME):
-	@if [ ! -f $(LIB_DIR)/libft.so ]; then \
-		echo "Error: libft.so not found in $(LIB_DIR)"; \
-		exit 1; \
-	fi
-	@ln -sf libft.so $@
-
-# =========================================================
-# Static library (libftprintf.a at repo root)
-# =========================================================
-
-$(STATIC_LIB): $(OBJS)
-	$(AR) $(ARFLAGS) $@ $^
-	@echo "Built static library: $@"
-
-# =========================================================
-# Shared library (build/shared/libftprintf.so.1.0.1)
-# =========================================================
-
-$(SHARED_LIB): $(PIC_OBJS) $(LIB_SONAME)
-	@mkdir -p $(SHARED_DIR)
-	$(CC) $(PIC_FLAGS) $(SHARED_LDFLAGS) $(PIC_OBJS) -o $@
-
-# =========================================================
-# Object files (static)
-# =========================================================
-
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+$(OBJ_DIR)/%.o: src/%.c
 	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -MMD -MP -c $< -o $@
 
 # =========================================================
-# Object files (PIC — for shared)
+# Test
 # =========================================================
 
-$(PIC_OBJ_DIR)/%.o: $(SRC_DIR)/%.c
-	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) $(PIC_FLAGS) -c $< -o $@
+test: all
+	@mkdir -p build/tests
+	$(CC) $(CFLAGS) $(LDFLAGS) \
+		tests/test_ftprintf.c \
+		$(NAME) \
+		$(LIBFT) \
+		-o $(TEST)
+	./$(TEST)
 
 # =========================================================
-# Test binaries
-# =========================================================
-
-$(TEST_DIR)/%: $(TEST_SRC_DIR)/%.c $(STATIC_LIB) $(LIB_SONAME)
-	@mkdir -p $(dir $@)
-	$(CC) $(filter-out -Werror,$(CFLAGS)) $< $(STATIC_LIB) $(LDFLAGS) -o $@
-
-# =========================================================
-# Run tests
-# =========================================================
-
-test: tests
-	@echo ""
-	@echo "========================================"
-	@echo " Running test suite"
-	@echo "========================================"
-	@PASS=0; FAIL=0; \
-	for bin in $(TEST_BINS); do \
-		if [ -f $$bin ]; then \
-			echo ""; \
-			echo "--- $$bin ---"; \
-			$$bin; \
-			if [ $$? -eq 0 ]; then \
-				PASS=$$((PASS+1)); \
-			else \
-				FAIL=$$((FAIL+1)); \
-			fi; \
-		fi; \
-	done; \
-	echo ""; \
-	echo "========================================"; \
-	echo " Suites: $$PASS passed, $$FAIL failed"; \
-	echo "========================================"; \
-	[ $$FAIL -eq 0 ]
-
-# =========================================================
-# Cleanup
+# Clean
 # =========================================================
 
 clean:
-	rm -rf $(BUILD_DIR)
-	rm -f $(LIB_SONAME)
+	rm -rf $(OBJ_DIR)
 
 fclean: clean
-	rm -f $(STATIC_LIB)
+	rm -f $(NAME)
+	rm -rf build/tests
 
 re: fclean all
 
 # =========================================================
-# Dependency files
+# Includes
 # =========================================================
 
--include $(DEPS)
+-include $(DEP)
 
-# =========================================================
-# Phony
-# =========================================================
-
-.PHONY: all shared tests test debug clean fclean re
+.PHONY: all clean fclean re test

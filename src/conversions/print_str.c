@@ -1,12 +1,10 @@
-#include "ft_printf.h"
+#include "../../include/ft_printf.h"
 
-int	print_str(va_list args)
+int	print_str(t_format *fmt, va_list args)
 {
 	char	*str;
 
+	(void)fmt;
 	str = va_arg(args, char *);
-	if (!str)
-		str = "(null)";
-	ft_putstr_fd(str, 1);
-	return ((int)ft_strlen(str));
+	return (put_str_len(str, -1));
 }
