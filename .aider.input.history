@@ -1,0 +1,70 @@
+
+# 2026-05-18 06:06:28.565286
++n
+
+# 2026-05-18 06:07:04.943154
++pode me ajudar executanto os testes do projeto e certificando que tudo esta correto
+
+# 2026-05-18 06:07:20.032519
++y
+
+# 2026-05-18 06:09:15.221896
++dev_yuji@Yuji-Positivo:~/Dev/ft_printf$ make all
++ln -sf libft.so lib/libft.so.1
++gcc -Wall -Wextra -Wpedantic -std=c11 -O2 -Iinclude -Ilib -MMD -MP tests/test_ftprintf.c libftprintf.a -Llib -lft -Wl,-rpath,/home/dev_yuji/Dev/ft_printf/lib -o build/tests/test_ftprintf
++tests/test_ftprintf.c: In function ‘main’:
++tests/test_ftprintf.c:47:35: warning: format ‘%c’ expects a matching ‘int’ argument [-Wformat=]
++   47 |         printf("\n--- Character (%c) ---\n");
++      |                                  ~^
++      |                                   |
++      |                                   int
++tests/test_ftprintf.c:61:32: warning: format ‘%s’ expects a matching ‘char *’ argument [-Wformat=]
++   61 |         printf("\n--- String (%s) ---\n");
++      |                               ~^
++      |                                |
++      |                                char *
++tests/test_ftprintf.c:74:40: warning: format ‘%d’ expects a matching ‘int’ argument [-Wformat=]
++   74 |         printf("\n--- Signed Integer (%d/%i) ---\n");
++      |                                       ~^
++      |                                        |
++      |                                        int
++tests/test_ftprintf.c:74:43: warning: format ‘%i’ expects a matching ‘int’ argument [-Wformat=]
++   74 |         printf("\n--- Signed Integer (%d/%i) ---\n");
++      |                                          ~^
++      |                                           |
++      |                                           int
++tests/test_ftprintf.c:95:23: warning: format ‘%d’ expects argument of type ‘int’, but argument 2 has type ‘long int’ [-Wformat=]
++   95 |         r2 = printf("%d\n", -2147483648);
++      |                      ~^     ~~~~~~~~~~~
++      |                       |     |
++      |                       int   long int
++      |                      %ld
++tests/test_ftprintf.c:100:42: warning: format ‘%u’ expects a matching ‘unsigned int’ argument [-Wformat=]
++  100 |         printf("\n--- Unsigned Integer (%u) ---\n");
++      |                                         ~^
++      |                                          |
++      |                                          unsigned int
++tests/test_ftprintf.c:114:47: warning: format ‘%x’ expects a matching ‘unsigned int’ argument [-Wformat=]
++  114 |         printf("\n--- Hexadecimal Lowercase (%x) ---\n");
++      |                                              ~^
++      |                                               |
++      |                                               unsigned int
++tests/test_ftprintf.c:132:47: warning: format ‘%X’ expects a matching ‘unsigned int’ argument [-Wformat=]
++  132 |         printf("\n--- Hexadecimal Uppercase (%X) ---\n");
++      |                                              ~^
++      |                                               |
++      |                                               unsigned int
++tests/test_ftprintf.c:146:33: warning: format ‘%p’ expects a matching ‘void *’ argument [-Wformat=]
++  146 |         printf("\n--- Pointer (%p) ---\n");
++      |                                ~^
++      |                                 |
++      |                                 void *
++tests/test_ftprintf.c:180:21: warning: zero-length gnu_printf format string [-Wformat-zero-length]
++  180 |         r2 = printf("");
++      |                     ^~
++/usr/bin/x86_64-linux-gnu-ld.bfd: cannot find -lft: No such file or directory
++collect2: error: ld returned 1 exit status
++make: *** [Makefile:142: build/tests/test_ftprintf] Error 1
+
+# 2026-05-18 06:09:21.995327
++n
