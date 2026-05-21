@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   print_str.c                                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: milsonyujiaoki <dev-yuji@student.42.sp>    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/05/21 10:38:41 by milsonyujiaoki    #+#    #+#             */
+/*   Updated: 2026/05/21 10:38:43 by milsonyujiaoki   ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "../../include/ft_printf.h"
 
 static int	put_spaces(int count)
@@ -15,9 +27,9 @@ static int	put_spaces(int count)
 
 int	print_str(t_format *fmt, va_list args)
 {
-	char	*str;
-	int		len;
-	int		count;
+	char *str;
+	int len;
+	int count;
 
 	str = va_arg(args, char *);
 	if (!str)

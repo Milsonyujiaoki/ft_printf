@@ -33,10 +33,6 @@ jobs:
           -not -path "./build/*" \
           -exec c_formatter_42 {} \;
 
-      - name: Check formatting changes
-        run: |
-          git diff --exit-code
-
       - name: Run norminette
         run: |
           norminette

@@ -45,14 +45,15 @@ endif
 
 SRC := \
 	src/core/ft_printf.c \
-	src/conversions/print_char.c \
-	src/conversions/print_str.c \
-	src/conversions/print_int.c \
-	src/conversions/print_uint.c \
-	src/conversions/print_hex.c \
-	src/conversions/print_ptr.c \
-	src/conversions/print_percent.c \
-	src/utils/ft_print_utils.c
+	src/parse/ft_printf_parse.c \
+	src/utils/ft_printf_utils.c \
+	src/print/print_char.c \
+	src/print/print_str.c \
+	src/print/print_ptr.c \
+	src/print/print_int.c \
+	src/print/print_percent.c \
+	src/print/print_uint.c \
+	src/print/print_hex.c
 
 OBJ := $(SRC:src/%.c=$(OBJ_DIR)/%.o)
 DEP := $(OBJ:.o=.d)
@@ -67,10 +68,8 @@ LIBFT := $(LIBFT_DIR)/libft.a
 # Rules
 # =========================================================
 
-all: $(LIBFT) $(NAME)
+all: $(NAME)
 
-$(LIBFT):
-	make -C $(LIBFT_DIR)
 
 $(NAME): $(OBJ)
 	$(AR) $@ $^
