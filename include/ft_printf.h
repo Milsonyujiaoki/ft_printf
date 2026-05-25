@@ -72,6 +72,7 @@ int			put_str_len(const char *str, int precision);
 int			putnbr_base_len(uintptr_t n, const char *base);
 
 /* FUNCTIONS */
+
 int			dispatch(t_format *fmt, va_list args);
 
 int			handle_format(const char *fmt, int *i, va_list args);
